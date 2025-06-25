@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las Vocales Mágicas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        h1 {
+            color: #334155;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        canvas {
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            background-color: #e2e8f0;
+            cursor: crosshair;
+            touch-action: none; /* Prevent scrolling on touch */
+            width: 100%; /* Make canvas responsive */
+            max-width: 600px; /* Max width for canvas */
+            height: auto; /* Maintain aspect ratio */
+            aspect-ratio: 16/9; /* Or define a suitable aspect ratio */
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .control-button {
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .control-button i {
+            font-size: 1.2rem;
+        }
+        .control-button.primary {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            color: white;
+            border: none;
+        }
+        .control-button.primary:hover {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            transform: translateY(-2px);
+        }
+        .control-button.secondary {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 2px solid #cbd5e1;
+        }
+        .control-button.secondary:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+        }
+        .vocal-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .vocal-button {
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 2.5rem; /* Larger font for vowels */
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fecaca; /* Light red */
+            color: #dc2626; /* Darker red */
+            border: 2px solid #ef4444; /* Red border */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .vocal-button.active {
+            background-color: #6ee7b7; /* Light green when active */
+            color: #047857; /* Darker green */
+            border-color: #10b981; /* Green border */
+            transform: scale(1.1);
+        }
+        .vocal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            p {
+                font-size: 1rem;
+            }
+            .control-button, .vocal-button {
+                width: 100%;
+                max-width: 200px;
+            }
+            .game-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Las Vocales Mágicas</h1>
+        <p>¡Ayuda a trazar las vocales siguiendo los puntos! Haz clic en una vocal para empezar.</p>
+        <div class="vocal-buttons">
+            <button class="vocal-button" data-vocal="A">A</button>
+            <button class="vocal-button" data-vocal="E">E</button>
+            <button class="vocal-button" data-vocal="I">I</button>
+            <button class="vocal-button" data-vocal="O">O</button>
+            <button class="vocal-button" data-vocal="U">U</button>
+        </div>
+        <canvas id="tracingCanvas"></canvas>
+        <div class="controls">
+            <button id="clearCanvas" class="control-button secondary">
+                <i class="fas fa-eraser"></i> Limpiar
+            </button>
+            <button id="playVocalSound" class="control-button primary">
+                <i class="fas fa-volume-up"></i> Sonido
+            </button>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <script>
+        // Get canvas and context
+        const canvas = document.getElementById('tracingCanvas');
+        const ctx = canvas.getContext('2d');
+        const clearButton = document.getElementById('clearCanvas');
+        const playSoundButton = document.getElementById('playVocalSound');
+        const vocalButtons = document.querySelectorAll('.vocal-button');
+        const messageBox = document.getElementById('messageBox');
+
+        // Drawing state variables
+        let isDrawing = false;
+        let currentVocal = null;
+        let paths = {}; // Stores paths for each vocal
+        let currentPath = []; // Current path being drawn
+        let touchIdentifier = null; // To track a specific touch
+
+        // Define tracing points for each vocal. These points are relative to a 1000x1000 grid for easier scaling.
+        // The 'O' and 'U' paths have been corrected for smoother tracing.
+        const vocalPaths = {
+            'A': [
+                [{x: 300, y: 700}, {x: 500, y: 300}, {x: 700, y: 700}], // Main A shape
+                [{x: 400, y: 550}, {x: 600, y: 550}] // Crossbar
+            ],
+            'E': [
+                [{x: 300, y: 300}, {x: 300, y: 700}], // Vertical line
+                [{x: 300, y: 300}, {x: 700, y: 300}], // Top horizontal
+                [{x: 300, y: 500}, {x: 600, y: 500}], // Middle horizontal
+                [{x: 300, y: 700}, {x: 700, y: 700}]  // Bottom horizontal
+            ],
+            'I': [
+                [{x: 500, y: 300}, {x: 500, y: 700}] // Vertical line
+            ],
+            'O': [
+                [
+                    {x: 500, y: 300}, // Start at top center
+                    {cp1x: 750, cp1y: 300, cp2x: 750, cp2y: 700, endx: 500, endy: 700, type: 'bezier'}, // Right arc to bottom center
+                    {cp1x: 250, cp1y: 700, cp2x: 250, cp2y: 300, endx: 500, endy: 300, type: 'bezier'}  // Left arc back to top center
+                ]
+            ],
+            'U': [
+                [
+                    {x: 300, y: 300}, // Start top-left
+                    {x: 300, y: 600}, // Line down left side
+                    {cp1x: 300, cp1y: 750, cp2x: 700, cp2y: 750, endx: 700, endy: 600, type: 'bezier'}, // Arc bottom
+                    {x: 700, y: 300}  // Line up right side
+                ]
+            ]
+        };
+
+        // Audio contexts for vocal sounds
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const vocalFrequencies = {
+            'A': 440, // A4
+            'E': 392, // G4
+            'I': 330, // E4
+            'O': 294, // D4
+            'U': 262  // C4
+        };
+
+        // Resize canvas function to make it responsive
+        function resizeCanvas() {
+            // Get the current max-width set by CSS
+            const maxWidth = parseInt(getComputedStyle(canvas).maxWidth);
+            const aspectRatio = 16 / 9; // Define the aspect ratio (e.g., 16:9)
+
+            // Set canvas dimensions based on max-width, maintaining aspect ratio
+            if (maxWidth > 0) {
+                canvas.width = maxWidth;
+                canvas.height = maxWidth / aspectRatio;
+            } else {
+                // Fallback if max-width isn't set or is dynamic
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetWidth / aspectRatio;
+            }
+
+            redrawCanvas(); // Redraw content after resizing
+        }
+
+        // Display a message box temporarily
+        function showMessageBox(message) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 1500); // Hide after 1.5 seconds
+        }
+
+        // Draw the current vocal outline
+        function drawVocalOutline(vocal) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear only for the outline
+            if (!vocal) return;
+
+            const scaleX = canvas.width / 1000;
+            const scaleY = canvas.height / 1000;
+
+            ctx.strokeStyle = '#aab8c2'; // Dotted outline color
+            ctx.lineWidth = 5;
+            ctx.setLineDash([10, 10]); // Dotted line
+
+            const paths = vocalPaths[vocal];
+            if (paths) {
+                paths.forEach(segment => {
+                    ctx.beginPath();
+                    // Assume the first point in a segment is always a moveTo
+                    ctx.moveTo(segment[0].x * scaleX, segment[0].y * scaleY);
+
+                    for (let i = 1; i < segment.length; i++) {
+                        const point = segment[i];
+                        if (point.type === 'bezier') {
+                            ctx.bezierCurveTo(
+                                point.cp1x * scaleX, point.cp1y * scaleY,
+                                point.cp2x * scaleX, point.cp2y * scaleY,
+                                point.endx * scaleX, point.endy * scaleY
+                            );
+                        } else {
+                            ctx.lineTo(point.x * scaleX, point.y * scaleY);
+                        }
+                    }
+                    ctx.stroke();
+                });
+            }
+
+            // Restore drawing style
+            ctx.setLineDash([]);
+            ctx.strokeStyle = '#3b82f6'; // Blue for drawing
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        // Redraw all drawn paths for the current vocal
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear full canvas
+            drawVocalOutline(currentVocal);
+
+            if (currentVocal && paths[currentVocal]) {
+                ctx.strokeStyle = '#3b82f6'; // Blue for drawn lines
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                paths[currentVocal].forEach(path => {
+                    if (path.length > 1) {
+                        ctx.beginPath();
+                        ctx.moveTo(path[0].x, path[0].y);
+                        for (let i = 1; i < path.length; i++) {
+                            ctx.lineTo(path[i].x, path[i].y);
+                        }
+                        ctx.stroke();
+                    }
+                });
+            }
+        }
+
+        // Play a vocal sound using Tone.js (or simple oscillator)
+        function playVocalSound(vocal) {
+            if (!vocal) {
+                showMessageBox("¡Selecciona una vocal primero!");
+                return;
+            }
+            const frequency = vocalFrequencies[vocal];
+            if (frequency) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.type = 'sine'; // Sine wave for a clean tone
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Volume control
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start();
+                showMessageBox(`¡Sonido de la vocal ${vocal}!`);
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 500); // Play for 0.5 seconds
+            }
+        }
+
+        // Get mouse or touch coordinates relative to the canvas
+        function getCoordinates(event) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (event.touches && event.touches.length > 0) {
+                const touch = Array.from(event.touches).find(t => t.identifier === touchIdentifier);
+                if (!touch) return null; // Only process the tracked touch
+                clientX = touch.clientX;
+                clientY = touch.clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        // Event Listeners for drawing
+        function startDrawing(event) {
+            if (!currentVocal) {
+                showMessageBox("¡Haz clic en una vocal para empezar a trazar!");
+                return;
+            }
+            isDrawing = true;
+            const coords = getCoordinates(event);
+            if (coords) {
+                currentPath = [coords];
+                if (!paths[currentVocal]) {
+                    paths[currentVocal] = [];
+                }
+                paths[currentVocal].push(currentPath);
+                ctx.beginPath();
+                ctx.moveTo(coords.x, coords.y);
+            }
+            if (event.touches) {
+                // Only track the first touch for drawing
+                touchIdentifier = event.touches[0].identifier;
+            }
+            event.preventDefault(); // Prevent scrolling on touch devices
+        }
+
+        function draw(event) {
+            if (!isDrawing) return;
+            const coords = getCoordinates(event);
+            if (coords) {
+                ctx.lineTo(coords.x, coords.y);
+                ctx.stroke();
+                currentPath.push(coords);
+            }
+            event.preventDefault(); // Prevent scrolling on touch devices
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            currentPath = [];
+            touchIdentifier = null; // Reset touch tracking
+        }
+
+        // Attach event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing); // Stop drawing if mouse leaves canvas
+
+        // Touch events
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
+
+        // Clear canvas button
+        clearButton.addEventListener('click', () => {
+            if (currentVocal) {
+                paths[currentVocal] = []; // Clear paths for the current vocal
+                redrawCanvas();
+                showMessageBox(`¡Lienzo limpiado para la vocal ${currentVocal}!`);
+            } else {
+                showMessageBox("No hay nada que limpiar.");
+            }
+        });
+
+        // Play sound button
+        playSoundButton.addEventListener('click', () => playVocalSound(currentVocal));
+
+        // Vocal selection buttons
+        vocalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                vocalButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to the clicked button
+                button.classList.add('active');
+
+                currentVocal = button.dataset.vocal;
+                showMessageBox(`¡A trazar la vocal ${currentVocal}!`);
+                drawVocalOutline(currentVocal); // Draw new vocal outline
+                // Load previously drawn paths if any
+                redrawCanvas();
+            });
+        });
+
+        // Initial setup
+        window.addEventListener('load', () => {
+            resizeCanvas(); // Set initial canvas size
+        });
+        window.addEventListener('resize', resizeCanvas); // Adjust canvas size on window resize
+    </script>
+</body>
+</html>
